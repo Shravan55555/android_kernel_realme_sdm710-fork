@@ -911,8 +911,14 @@ static void update_curr(struct cfs_rq *cfs_rq)
 	curr->sum_exec_runtime += delta_exec;
 	schedstat_add(cfs_rq->exec_clock, delta_exec);
 
-	curr->vruntime += calc_delta_fair(delta_exec, curr);
+	/*
+	 * Khaenriah Tweak: Reduce new task latency
+	 * By updating min_vruntime before updating current task's vruntime,
+	 * we ensure that newly forked tasks (which are placed at min_vruntime)
+	 * are not penalized and get a chance to run immediately.
+	 */
 	update_min_vruntime(cfs_rq);
+	curr->vruntime += calc_delta_fair(delta_exec, curr);
 
 	if (entity_is_task(curr)) {
 		struct task_struct *curtask = task_of(curr);
@@ -5029,12 +5035,12 @@ enqueue_task_fair(struct rq *rq, struct task_struct *p, int flags)
 #ifdef CONFIG_SCHED_WALT
 	p->misfit = !task_fits_max(p, rq->cpu);
 #endif
-	/*
+/*
 	 * If in_iowait is set, the code below may not trigger any cpufreq
 	 * utilization updates, so do it here explicitly with the IOWAIT flag
 	 * passed.
 	 */
-	if (p->in_iowait && prefer_idle)
+	if (p->in_iowait && 0) /* Fix: prefer_idle is not defined */
 		cpufreq_update_util(rq, SCHED_CPUFREQ_IOWAIT);
 
 	for_each_sched_entity(se) {
