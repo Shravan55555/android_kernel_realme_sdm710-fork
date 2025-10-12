@@ -1,0 +1,99 @@
+name: Build Khaenriah Kernel 📈
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Building Khaenriah Kernel for RMX1971
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    env:
+      TZ: Africa/Cairo
+      CCACHE_COMPILERCHECK: "%compiler% -dumpmachine; %compiler% -dumpversion"
+      CCACHE_NOHASHDIR: "true"
+      CCACHE_MAXSIZE: "2G"
+      CCACHE_HARDLINK: "true"
+      KERNEL_DEFCONFIG: sdm670-perf_defconfig
+      ANYKERNEL_REPO: https://github.com/dain09/AnyKernel3
+      ANYKERNEL_BRANCH: ksun
+
+    steps:
+    - name: Checkout Kernel Source
+      uses: actions/checkout@v4
+      with:
+        submodules: 'true'
+        fetch-depth: 0
+
+    - name: Set up ccache
+      uses: hendrikmuhs/ccache-action@v1.2
+    
+    - name: Install Build Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+             gcc-aarch64-linux-gnu gcc-arm-linux-gnueabi \
+             binutils make python3 libssl-dev build-essential bc bison flex \
+             zip unzip ca-certificates xz-utils android-tools-mkbootimg cpio \
+             device-tree-compiler git git-lfs curl
+
+    - name: Download and Extract Clang Toolchain
+      run: |
+        curl -LSs -o Clang-13.0.1.tar.gz "https://github.com/ZyCromerZ/Clang/releases/download/13.0.1-20230207-release/Clang-13.0.1-20230207.tar.gz"
+        mkdir clang
+        tar -xf Clang-13.0.1.tar.gz -C clang/
+
+    - name: Download AnyKernel3
+      run: |
+        git clone --depth=1 -b ${{ env.ANYKERNEL_BRANCH }} ${{ env.ANYKERNEL_REPO }} AnyKernel3
+        
+    - name: Get Build Time
+      id: get_time
+      run: echo "TIME=$(date +%Y.%m.%d-%H%M)" >> $GITHUB_OUTPUT
+    
+    - name: Build Kernel
+      run: |
+        export PATH=$(pwd)/clang/bin:$PATH
+        export ARCH=arm64
+        export SUBARCH=arm64
+        export KBUILD_BUILD_USER="dain09"
+        export KBUILD_BUILD_HOST="ubuntu"
+        export CROSS_COMPILE=aarch64-linux-gnu-
+        export CROSS_COMPILE_ARM32=arm-linux-gnueabi-
+
+        make O=out ${{ env.KERNEL_DEFCONFIG }}
+        make O=out -j$(nproc --all) \
+                    CC="ccache clang" \
+                    LD=ld.lld \
+                    AR=llvm-ar \
+                    NM=llvm-nm \
+                    OBJCOPY=llvm-objcopy \
+                    OBJDUMP=llvm-objdump \
+                    STRIP=llvm-strip
+
+    - name: Copy Kernel Image to AnyKernel3
+      run: |
+        cp out/arch/arm64/boot/Image.gz-dtb AnyKernel3/
+
+    - name: Package Kernel into Flashable Zip
+      run: |
+        cd AnyKernel3
+        ZIP_NAME="Khaenriah-KernelSU-Next-Susfs-1.5.11-Kernel-RMX1971-${{ steps.get_time.outputs.TIME }}.zip"
+        zip -r9 ../$ZIP_NAME ./*
+        cd ..
+        echo "ZIP_NAME=$ZIP_NAME" >> $GITHUB_ENV
+
+    - name: Upload Artifact and Create Release
+      uses: softprops/action-gh-release@v2
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        tag_name: "Khaenriah-Kernel-v1.0-${{ steps.get_time.outputs.TIME }}"
+        name: "Khaenriah Kernel | RMX1971 | ${{ steps.get_time.outputs.TIME }}"
+        body: |
+
+          Khaenriah Kernel release for RMX1971.
+          Flash and get ready for the gains!
+
+          *Not a financial advice.*
+        files: ${{ env.ZIP_NAME }}
