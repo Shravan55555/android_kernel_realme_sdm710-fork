@@ -16,8 +16,8 @@ jobs:
       CCACHE_MAXSIZE: "2G"
       CCACHE_HARDLINK: "true"
       KERNEL_DEFCONFIG: sdm670-perf_defconfig
-      ANYKERNEL_REPO: https://github.com/dain09/AnyKernel3
-      ANYKERNEL_BRANCH: ksun
+      ANYKERNEL_REPO: https://github.com/Shravan55555/AnyKernel3
+      ANYKERNEL_BRANCH: master
 
     steps:
     - name: Checkout Kernel Source
