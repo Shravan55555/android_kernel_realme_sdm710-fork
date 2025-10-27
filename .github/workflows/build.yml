@@ -10,7 +10,7 @@ jobs:
     permissions:
       contents: write
     env:
-      TZ: Africa/Cairo
+      TZ: Asia/Kolkata
       CCACHE_COMPILERCHECK: "%compiler% -dumpmachine; %compiler% -dumpversion"
       CCACHE_NOHASHDIR: "true"
       CCACHE_MAXSIZE: "2G"
