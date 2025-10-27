@@ -5,7 +5,7 @@ on:
 
 jobs:
   build:
-    name: Building Khaenriah Kernel for RMX1971
+    name: Building Khaenriah Kernel for RMX1901
     runs-on: ubuntu-22.04
     permissions:
       contents: write
@@ -57,7 +57,7 @@ jobs:
         export PATH=$(pwd)/clang/bin:$PATH
         export ARCH=arm64
         export SUBARCH=arm64
-        export KBUILD_BUILD_USER="dain09"
+        export KBUILD_BUILD_USER="shravan"
         export KBUILD_BUILD_HOST="ubuntu"
         export CROSS_COMPILE=aarch64-linux-gnu-
         export CROSS_COMPILE_ARM32=arm-linux-gnueabi-
@@ -79,7 +79,7 @@ jobs:
     - name: Package Kernel into Flashable Zip
       run: |
         cd AnyKernel3
-        ZIP_NAME="Khaenriah-KernelSU-Next-Susfs-1.5.12-Kernel-RMX1971-${{ steps.get_time.outputs.TIME }}.zip"
+        ZIP_NAME="Khaenriah-KernelSU-Next-Susfs-1.5.12-Kernel-RMX1901-${{ steps.get_time.outputs.TIME }}.zip"
         zip -r9 ../$ZIP_NAME ./*
         cd ..
         echo "ZIP_NAME=$ZIP_NAME" >> $GITHUB_ENV
@@ -89,10 +89,10 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         tag_name: "Khaenriah-Kernel-v1.0-${{ steps.get_time.outputs.TIME }}"
-        name: "Khaenriah Kernel | RMX1971 | ${{ steps.get_time.outputs.TIME }}"
+        name: "Khaenriah Kernel | RMX1901 | ${{ steps.get_time.outputs.TIME }}"
         body: |
 
-          Khaenriah Kernel release for RMX1971.
+          Khaenriah Kernel release for RMX1901.
           Flash and get ready for the gains!
 
           *Not a financial advice.*
